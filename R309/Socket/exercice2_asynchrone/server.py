@@ -2,7 +2,7 @@ import socket
 import threading
 
 def handle_client(client_socket):
-    
+    pass
 
 
 
@@ -10,7 +10,8 @@ def handle_client(client_socket):
 
 def test():
     while True:
-
+        client_socket = 0
+        client = client_socket
         # Receive data from the client
         data = client.recv(1024)
         if not data:
