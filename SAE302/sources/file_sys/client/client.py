@@ -11,7 +11,7 @@ file_path = str(input("Enter the file path: "))
 file_name = file_path.split('/')[-1]
 
 file = open(file_path, 'rb')
-file_size = os.path.getsize('magic.png')
+file_size = os.path.getsize(file_path)
 
 
 client.send(client_uuid.encode())

@@ -10,7 +10,7 @@ def main(host, port, message):
 
 
 if __name__ == '__main__':
-    host = socket.gethostname()
-    port = 6969
+    host = "0.0.0.0"
+    port = 9990
     message = 'Hello, server!'
     main(host, port, message)

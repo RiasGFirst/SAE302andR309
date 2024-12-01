@@ -13,7 +13,7 @@ action = client.recv(1024).decode()
 
 if action == "run":
     # Compiler le programme C
-    compile_process = subprocess.run(["gcc", "programmc.c", "-o", "programme"], capture_output=True, text=True)
+    compile_process = subprocess.run(["g++", "programmc.cpp", "-o", "programme"], capture_output=True, text=True)
 
     # Vérifier si la compilation a réussi
     if compile_process.returncode == 0:

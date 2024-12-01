@@ -1,0 +1,10 @@
+{
+  "PASSWORD": "coucou",
+  "SERVERS": {
+    "slave1": {
+      "IP": "127.0.0.1",
+      "PORT": 6666,
+      "PASSWORD": "coucou"
+    }
+  }
+}

@@ -1,56 +1,79 @@
 import socket
 import threading
 
-def handle_client(client_socket):
+def handle_client(client_socket, server_socket):
     pass
 
-
-
-
-
-def test():
+def envoie_message(client_socket):
     while True:
-        client_socket = 0
-        client = client_socket
-        # Receive data from the client
-        data = client.recv(1024)
-        if not data:
-            break
-        message = data.decode()
-        match message:
-            case "bye":
-                print("Client has closed the connection")
-                client.send("bye".encode())
-                nb_msg = 0
-                break
-            case "arret":
-                print("Server has been stopped")
-                client.send("bye".encode())
-                arret = True
-                break
-            case _:
-                print(f"Client says: {data.decode()}")
-                nb_msg += 1
-                client.send(f"You send {nb_msg} messages".encode())
-    if arret:
-        break
+        try:
+            message = input()
+        except EOFError:
+            return
+        try:
+            client_socket.send(message.encode())
+        except ConnectionResetError:
+            return
+        except OSError:
+            return
 
+def reception_message(client_socket, server_socket):
+    while True:
+        try:
+            message = client_socket.recv(1024).decode()
+        except ConnectionResetError:
+            print(f"Le client a fermé la connexion!")
+            client_socket.close()
+            return
+        except ConnectionAbortedError:
+            client_socket.close()
+            return
+        else:
+            print(f"{message}")
+            if message == "bye":
+                print("Le client ferme la connexion")
+                reply = "bye"
+                client_socket.send(reply.encode())
+                client_socket.close()
+                return
+            elif message == "arret":
+                print("Le client a arrêté le serveur")
+                reply = "arret"
+                client_socket.send(reply.encode())
+                client_socket.close()
+                server_socket.close()
+                return True
+            else:
+                reply = ""
+                try:
+                    client_socket.send(reply.encode())
+                except OSError:
+                    return True
+    pass
 
-
-
-def main():
+def main(port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((socket.gethostname(), 1234))
+    try:
+        server.bind(('0.0.0.0', port))
+    except OSError:
+        print(f"\033[31mLe port {port} est déjà ouvert!\033[0m")
+        server.close()
+        return
+
     server.listen(5)
-
-    print("Server started.")
-
+    print(f"[*] Listening on {server.getsockname()}")
     while True:
-        client, addr = server.accept()
-        print(f"Accepted connection from {addr}")
+        try:
+            client, addr = server.accept()
+            print(f"[*] Accepted connection from {addr}")
+            tlisten = threading.Thread(target=reception_message, args=(client, server))
+            twrite = threading.Thread(target=envoie_message, args=(client,))
+            tlisten.start()
+            twrite.start()
+            tlisten.join()
+        except OSError:
+            return
 
-        client_handler = threading.Thread(target=handle_client, args=(client,))
-        client_handler.start()
 
 if __name__ == "__main__":
-    main()
+    main(port=9990)

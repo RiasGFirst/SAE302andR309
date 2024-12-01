@@ -30,6 +30,7 @@ def serve():
                 "C": "gcc",
                 "C++": "g++",
                 "Java": "javac",
+                "Python": "python"
             }
             verify_compile(compilateurs)
         case "run":
