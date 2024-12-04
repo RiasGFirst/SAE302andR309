@@ -102,48 +102,45 @@ class ServerConnection:
             self.__client_socket.close()
 
     def send_file(self, file_path: str):
+        self.__client_socket.send("<CLIENT_FILE>".encode())
         file_name = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        self.log_to_console(f"Envoi du fichier {file_name} ({file_size} octets)")
+
         try:
-            self.__client_socket.send("<CLIENT_FILE_SERVICE>".encode())
-            message = self.__client_socket.recv(1024).decode()
-            print(message)
-            if message == "<CLIENT_FILE_START>":
-                self.__client_socket.send(file_name.encode())
-                message = self.__client_socket.recv(1024).decode()
-                print(message)
-                if message == "<CLIENT_FILE_ERROR>":
-                    self.log_to_console(f"L'extension du fichier n'est pas supportée.")
-                elif message == "<CLIENT_FILE_OK>":
-                    self.log_to_console("Fichier autorisé, envoie en cours")
-                    self.__client_socket.send(str(os.path.getsize(file_path)).encode())
-                    message = self.__client_socket.recv(1024).decode()
-                    print(message)
-                    if message == "<CLIENT_FILE_SIZE_OK>":
+            print("waiting for server")
+            msg = self.__client_socket.recv(1024).decode()
+            print(msg)
+            if msg == "<FILE_SERVICE>":
+                msg = self.__client_socket.recv(1024).decode()
+                if msg == "<FILE_DATA_REQUESTS>":
+                    self.__client_socket.send(file_name.encode())
+                    time.sleep(0.5)
+                    self.__client_socket.send(str(file_size).encode())
+
+                    msg = self.__client_socket.recv(1024).decode()
+                    if msg == "<FILE_DATA_READY>":
                         file = open(file_path, "rb")
                         data = file.read()
                         self.__client_socket.sendall(data)
-                        self.__client_socket.send(b"<END>")
-
+                        self.__client_socket.send(b"<FILE_DONE>")
                         file.close()
-                        message = self.__client_socket.recv(1024).decode()
-                        print(message)
-                        if message == "<CLIENT_FILE_RECEIVED>":
+                        msg = self.__client_socket.recv(1024).decode()
+
+                        if msg == "<FILE_RECEIVED>":
                             self.log_to_console(f"Le fichier {file_name} a été envoyé avec succès")
-                        else:
-                            print("Erreur lors de l'envoi du fichier")
-                            self.log_to_console("Erreur lors de l'envoi du fichier")
+                            return
+
                     else:
-                        print("Erreur lors de l'envoi de la taille du fichier")
-                        self.log_to_console("Erreur lors de l'envoi de la taille du fichier")
-                else:
-                    print("Erreur lors de l'envoi du fichier")
-                    self.log_to_console("Erreur lors de l'envoi du fichier")
-            else:
-                print("Erreur lors de l'envoi du fichier")
-                self.log_to_console("Erreur lors de l'envoi du fichier")
+                        self.log_to_console("Le serveur n'autorise pas le transfert de fichiers")
+                        return
         except Exception as e:
             print(f"Erreur : {e}")
-            self.log_to_console(f"Erreur lors de l'envoi du fichier : {e}")
+            return
+        else:
+            self.log_to_console("Le serveur n'est pas prêt pour le transfert de fichiers")
+            return
+
 
 
 
