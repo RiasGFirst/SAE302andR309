@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QPushButton, QTextEdit, QVBoxLayout, \
     QHBoxLayout, QGridLayout, QGroupBox, QFileDialog
 from PyQt6.QtCore import Qt
-import threading
 import socket
 import time
 import sys
@@ -13,6 +12,23 @@ is_connected = False
 
 def log_to_console(msg, console_output):
     console_output.append(msg)
+
+
+def logout_from_server(console_output):
+    global client_socket, is_connected
+    if client_socket is not None:
+        try:
+            client_socket.send("<CLIENT_QUIT>".encode())
+            msg = client_socket.recv(1024).decode()
+            if msg == "<CLIENT_DISCONNECT>":
+                client_socket.close()
+                client_socket = None
+                is_connected = False
+                log_to_console("Déconnecté du serveur", console_output)
+            else:
+                log_to_console("Échec de la déconnexion", console_output)
+        except Exception as e:
+            log_to_console(f"Error while logging out: {e}", console_output)
 
 
 def server_connection(host, port, username, password, console_output):
@@ -78,12 +94,8 @@ def send_file(file_path, console_output):
             log_to_console("Error: Invalid file path.", console_output)
             return
 
-        print(client_socket)
-        print(file_path)
         file_name = os.path.basename(file_path)  # Récupération propre du nom du fichier
         file_size = os.path.getsize(file_path)
-        print(file_name, file_size)
-
         # Envoi de la demande d'envoi de fichier
         client_socket.send("<CLIENT_FILE>".encode())
         msg = client_socket.recv(1024).decode()
@@ -94,34 +106,82 @@ def send_file(file_path, console_output):
                 client_socket.send(file_name.encode())
                 client_socket.send(str(file_size).encode())
                 msg = client_socket.recv(1024).decode()
-                print(msg)
                 if msg == "<FILE_DATA_READY>":
-                    print("File data ready")
                     # Envoi du contenu du fichier
                     with open(file_path, "rb") as file:
-                        print("Sending file...")
                         data = file.read()
                         client_socket.sendall(data)
 
                     client_socket.send(b"<END>")
                     msg = client_socket.recv(1024).decode()
-                    print(msg)
                     if msg == "<FILE_RECEIVED>":
                         log_to_console(f"File {file_name} sent successfully", console_output)
+                        execute_file(file_name, console_output)
                     else:
                         log_to_console(f"Failed to send file {file_name}", console_output)
+                        logout_from_server(console_output)
                 else:
                     log_to_console("Failed to prepare for file sending OR file not allowed!", console_output)
+                    logout_from_server(console_output)
             else:
                 log_to_console("File request handshake failed.", console_output)
+                logout_from_server(console_output)
         else:
             log_to_console("File service handshake failed.", console_output)
+            logout_from_server(console_output)
     except FileNotFoundError:
         log_to_console("Error: File not found.", console_output)
     except BrokenPipeError:
         log_to_console("Error: Connection broken (Broken pipe).", console_output)
+        logout_from_server(console_output)
     except Exception as e:
         log_to_console(f"Error while sending file: {e}", console_output)
+        logout_from_server(console_output)
+
+
+def execute_file(file_name, console_output):
+    global client_socket
+    try:
+        msg = client_socket.recv(1024).decode()
+        if msg == "<EXEC_FILE>":
+            client_socket.send("<EXEC_FILE_READY>".encode())
+            msg = client_socket.recv(1024).decode()
+            match msg:
+                case "<PYTHON>":
+                    log_to_console("We are in Python Mode", console_output)
+                    response1 = client_socket.recv(1024).decode()
+                    log_to_console("", console_output)
+                    log_to_console(f"Response of the execution of the file {file_name}: ", console_output)
+                    log_to_console(response1, console_output)
+                    logout_from_server(console_output)
+                case "<C>":
+                    log_to_console("We are in C Mode", console_output)
+                    response1 = client_socket.recv(1024).decode()
+                    log_to_console("", console_output)
+                    log_to_console(f"Response of the execution of the file {file_name}: ", console_output)
+                    log_to_console(response1, console_output)
+                    logout_from_server(console_output)
+                case "<CPP>":
+                    log_to_console("We are in C++ Mode", console_output)
+                    response1 = client_socket.recv(1024).decode()
+                    log_to_console("", console_output)
+                    log_to_console(f"Response of the execution of the file {file_name}: ", console_output)
+                    log_to_console(response1, console_output)
+                    logout_from_server(console_output)
+                case "<JAVA>":
+                    log_to_console("We are in Java Mode", console_output)
+                    response1 = client_socket.recv(1024).decode()
+                    log_to_console("", console_output)
+                    log_to_console(f"Response of the execution of the file {file_name}: ", console_output)
+                    log_to_console(response1, console_output)
+                    logout_from_server(console_output)
+                case _:
+                    log_to_console("We are in Unknown Mode", console_output)
+
+
+    except Exception as e:
+        log_to_console(f"Error while executing file: {e}", console_output)
+        logout_from_server(console_output)
 
 
 
