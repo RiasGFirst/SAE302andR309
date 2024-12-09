@@ -8,6 +8,7 @@ def compile(client_socket, file_name, client_id):
     msg = client_socket.recv(1024).decode()
 
     if msg == "<EXEC_FILE_READY>":
+        print(f"[*] File from {client_id} is ready to be compiled")
         file_extension = file_name.split('.')[-1]
 
         if file_extension == "py":

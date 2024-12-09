@@ -15,6 +15,7 @@ def file_services(client_socket, client_id):
     client_socket.send('<FILE_DATA_REQUESTS>'.encode())
     file_name = client_socket.recv(1024).decode()
     file_size = client_socket.recv(1024).decode()
+    print(f"[*] Client {client_id} has sent the file {file_name} of size {file_size} bytes")
     if check_extension(file_name, server_dir):
         client_socket.send('<FILE_DATA_READY>'.encode())
 
@@ -31,6 +32,7 @@ def file_services(client_socket, client_id):
         file.write(file_bytes[:-5])
         file.close()
         client_socket.send('<FILE_RECEIVED>'.encode())
+        print(f"[*] The file {file_name} has been received successfully")
 
         compile_services.compile(client_socket, f"{client_dir}/{file_name}", client_id)
     else:

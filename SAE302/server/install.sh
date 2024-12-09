@@ -28,29 +28,80 @@ else
 fi
 
 # Demander si l'utilisateur souhaite créer des utilisateurs
-read -p "Souhaitez-vous créer des utilisateurs ? (oui/non) : " create_users
-if [[ "$create_users" == "oui" ]]; then
-  users_file="$files_dir/users.txt"
-  echo "Ajout des utilisateurs. Entrez 'stop' pour terminer."
+users_file="$files_dir/users.txt"
+echo "Ajout des utilisateurs (min 1). Entrez 'stop' pour terminer."
 
-  while true; do
-    read -p "Entrez le nom d'utilisateur (ou 'stop' pour terminer) : " username
-    if [[ "$username" == "stop" ]]; then
-      break
-    fi
-    read -p "Entrez le mot de passe pour $username : " password
-    echo "$username:$password" >> "$users_file"
-    echo "Utilisateur $username ajouté."
-  done
+while true; do
+  read -p "Entrez le nom d'utilisateur (ou 'stop' pour terminer) : " username
+  if [[ "$username" == "stop" ]]; then
+    break
+  fi
+  read -p "Entrez le mot de passe pour $username : " password
+  echo "$username:$password" >> "$users_file"
+  echo "Utilisateur $username ajouté."
+done
 
-  echo "Les utilisateurs ont été enregistrés dans $users_file."
-else
-  echo "Aucun utilisateur n'a été créé. Le serveur n'acceptera pas de connexion."
-fi
+echo "Les utilisateurs ont été enregistrés dans $users_file."
 
+# Ajouter des serveurs
 read -p "Souhaitez-vous ajouter des serveurs ? (oui/non) : " add_servers
 if [[ "$add_servers" == "oui" ]]; then
   servers_file="$files_dir/servers.json"
+  echo "Ajout des serveurs. Entrez 'stop' pour terminer."
+
+  # Demander le mot de passe principal
+  read -p "Entrez le mot de passe principal du serveur : " thisserver_password
+
+  # Créer la structure JSON initiale
+  echo "{
+  \"PASSWORD\": \"$thisserver_password\",
+  \"SERVERS\": {
+  }
+}" > "$servers_file"
+
+  # Ajouter des serveurs
+  while true; do
+    read -p "Entrez un nom pour le serveur (ou 'stop' pour terminer) : " server_name
+    if [[ "$server_name" == "stop" ]]; then
+      break
+    fi
+
+    read -p "Entrez l'adresse IP du serveur : " server_ip
+    read -p "Entrez le port du serveur : " server_port
+    read -p "Entrez le mot de passe du serveur : " server_password
+
+    # Ajouter le serveur au fichier JSON
+    python3 - <<EOF
+import json
+
+file_path = "$servers_file"
+
+# Charger le fichier JSON existant
+with open(file_path, "r") as f:
+    data = json.load(f)
+
+# Ajouter un serveur
+data["SERVERS"]["$server_name"] = {
+    "IP": "$server_ip",
+    "PORT": int($server_port),
+    "PASSWORD": "$server_password"
+}
+
+# Enregistrer les modifications
+with open(file_path, "w") as f:
+    json.dump(data, f, indent=2)
+EOF
+
+    echo "Serveur $server_name ajouté."
+  done
+
+  echo "Tous les serveurs ont été enregistrés dans $servers_file."
 else
   echo "Aucun serveur n'a été ajouté."
 fi
+
+echo "Installation terminée."
+echo "Pour activer l'environnement virtuel, exécutez : source $current_dir/venv/bin/activate"
+
+# Lancer le serveur
+echo "Pour lancer le serveur, exécutez : python $current_dir/server.py"
