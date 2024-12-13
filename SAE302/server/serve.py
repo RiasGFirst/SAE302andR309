@@ -7,7 +7,7 @@ import socket
 import time
 
 
-def reception_message(client_socket):
+def reception_message(client_socket, max_client):
     global client_connected
     client_type = None
     client_id = None
@@ -34,7 +34,7 @@ def reception_message(client_socket):
                     pass
             else:
                 if message == "<CLIENT_AUTH>":
-                    client_type, client_id = auth.authentificate(client_socket, client_connected)
+                    client_type, client_id = auth.authentificate(client_socket, client_connected, max_client)
                     if client_type is None or client_id is None:
                         client_socket.close()
                         return
@@ -42,7 +42,7 @@ def reception_message(client_socket):
                     client_socket.send("<CLIENT_AUTH>".encode())
 
 
-def serve(port):
+def serve(port, max_client):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         server.bind(('0.0.0.0', port))
@@ -51,7 +51,8 @@ def serve(port):
         server.close()
         return
 
-    server.listen(5)
+    server.listen(max_client+1)
+    print(f"\033[32m[*] Server accept {max_client+1} connection and only {max_client} clients...\033[0m")
     print(f"\033[32m[*] Listening on {server.getsockname()} \033[0m")
 
     while True:
@@ -59,7 +60,7 @@ def serve(port):
             client, addr = server.accept()
             print(f"\033[31m[*] Accepted connection from {addr}\033[0m")
             # Création d'un nouveau thread pour gérer le client
-            tlisten = threading.Thread(target=reception_message, args=(client,))
+            tlisten = threading.Thread(target=reception_message, args=(client, max_client))
             tlisten.daemon = True  # Permet de fermer les threads en même temps que le programme principal
             tlisten.start()
         except KeyboardInterrupt:
@@ -70,9 +71,10 @@ def serve(port):
 
 if __name__ == "__main__":
     client_connected = []
-    # Creer des arguments pour le port
     parser = argparse.ArgumentParser(description="Servers")
     parser.add_argument("-p", "--port", type=int, help="Port d'écoute du serveur", default=9999)
+    parser.add_argument("-c", "--max_client", type=int, help="Nombre maximum de client", default=1)
+
     args = parser.parse_args()
     compilateurs = {
         "C": "gcc",
@@ -81,4 +83,4 @@ if __name__ == "__main__":
         "Python": "python"
     }
     check_compilor.verify_compile(compilateurs)
-    serve(args.port)
+    serve(args.port, args.max_client)

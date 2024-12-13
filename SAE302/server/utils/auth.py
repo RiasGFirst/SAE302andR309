@@ -6,7 +6,7 @@ import time
 import os
 
 
-def authentificate(client_socket, client_connected) -> (str, dict):
+def authentificate(client_socket, client_connected, max_client=1) -> (str, dict):
     ctype, cid = login(client_socket, client_connected)
     if ctype is None and cid is None:
         print(f"\033[31m[*] Client has been rejected!\033[0m")
@@ -17,7 +17,7 @@ def authentificate(client_socket, client_connected) -> (str, dict):
 
     # verify if a client is already connected
     print(f"client_connected: {client_connected}, len: {len(client_connected)}")
-    if len(client_connected) > 1:
+    if len(client_connected) > max_client:
         for c in client_connected:
             if c == client_id:
                 print("Client is exceeding the limit")
