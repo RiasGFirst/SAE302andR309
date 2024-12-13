@@ -43,22 +43,23 @@ done
 
 echo "Les utilisateurs ont été enregistrés dans $users_file."
 
-# Ajouter des serveurs
-read -p "Souhaitez-vous ajouter des serveurs ? (oui/non) : " add_servers
-if [[ "$add_servers" == "oui" ]]; then
-  servers_file="$files_dir/servers.json"
-  echo "Ajout des serveurs. Entrez 'stop' pour terminer."
+servers_file="$files_dir/servers.json"
+# Demander le mot de passe principal
+read -p "Entrez le mot de passe principal du serveur : " thisserver_password
 
-  # Demander le mot de passe principal
-  read -p "Entrez le mot de passe principal du serveur : " thisserver_password
-
-  # Créer la structure JSON initiale
-  echo "{
+# Créer la structure JSON initiale
+echo "{
   \"PASSWORD\": \"$thisserver_password\",
   \"SERVERS\": {
   }
 }" > "$servers_file"
 
+# Ajouter des serveurs
+read -p "Souhaitez-vous ajouter des serveurs ? (oui/non) : " add_servers
+
+if [[ "$add_servers" == "oui" ]]; then
+  servers_file="$files_dir/servers.json"
+  echo "Ajout des serveurs. Entrez 'stop' pour terminer."
   # Ajouter des serveurs
   while true; do
     read -p "Entrez un nom pour le serveur (ou 'stop' pour terminer) : " server_name
