@@ -101,7 +101,6 @@ def send_file(file_path, console_output):
         msg = client_socket.recv(1024).decode()
         if msg == "<FILE_SERVICE>":
             msg = client_socket.recv(1024).decode()
-            print(msg)
             if msg == "<FILE_DATA_REQUESTS>":
                 # Envoi des métadonnées du fichier
                 client_socket.send(file_name.encode())
@@ -200,7 +199,6 @@ class MainWindow(QMainWindow):
 
         self.username_label = QLabel("Username:")
         self.username_input = QLineEdit()
-        self.username_input.setText("rias")
 
         self.password_label = QLabel("Password:")
         self.password_input = QLineEdit()
@@ -212,7 +210,6 @@ class MainWindow(QMainWindow):
 
         self.port_label = QLabel("Port:")
         self.port_input = QLineEdit()
-        self.port_input.setText("9999")
 
         self.connect_button = QPushButton("Connect")
         self.connect_button.clicked.connect(self.connectToServer)
