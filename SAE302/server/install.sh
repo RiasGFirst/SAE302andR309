@@ -105,4 +105,4 @@ echo "Installation terminée."
 echo "Pour activer l'environnement virtuel, exécutez : source $current_dir/venv/bin/activate"
 
 # Lancer le serveur
-echo "Pour lancer le serveur, exécutez : python $current_dir/server.py"
+echo "Pour lancer le serveur, exécutez : python $current_dir/serve.py"
